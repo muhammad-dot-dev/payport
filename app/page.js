@@ -1,9 +1,9 @@
 "use client"
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import MAN from "@/public/man.json";
-import COIN from "@/public/coin.json";
-import FANS from "@/public/fans.json";
+import MAN from "../public/man.json";
+import COIN from "../public/coin.json";
+import FANS from "../public/fans.json";
 import { Player } from '@lordicon/react';
 import { Lottie } from "lottie-react";
 

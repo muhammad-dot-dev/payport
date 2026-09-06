@@ -4,7 +4,7 @@ const {Schema , model} = mongoose;
 
 const userSchema = new Schema({
     email: {type:String , required:true},
-    name: {type:String , required:true},
+    name: {type:String },
     username: {type:String , required:true},
     profilePic: {type:String},
     coverPic: {type:String},
@@ -12,5 +12,4 @@ const userSchema = new Schema({
     updatedAt: {type:String , default:Date.now},
 })
 
-
-const User = model("User" , userSchema)
+export default  mongoose.models.User || model("User" , userSchema)  ;
