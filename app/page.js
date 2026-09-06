@@ -1,69 +1,114 @@
+"use client"
 import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import MAN from "@/public/man.json";
+import COIN from "@/public/coin.json";
+import FANS from "@/public/fans.json";
+import { Player } from '@lordicon/react';
+import { Lottie } from "lottie-react";
 
 export default function Home() {
+  const [gifKey, setGifKey] = useState(0);
+
+  const handleHover = () => {
+    setGifKey((prev) => prev + 1);
+  };
+
+  const manRef = useRef(null);
+  const coinRef = useRef(null);
+  const fanRef = useRef(null);
+
+  useEffect(() => {
+    manRef.current?.playFromBeginning()
+    coinRef.current?.playFromBeginning()
+    fanRef.current?.playFromBeginning()
+  }, [])
+
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <>
+      <div className="flex flex-col gap-4 justify-center items-center h-[44vh]">
+        <div className="font-bold text-5xl text-blue-950 flex justify-center items-center gap-8">
+          <span> Buy me a NOTE </span>
+          <div onMouseEnter={handleHover} className="cursor-pointer">
             <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+              key={gifKey}
+              src="/creditcard.gif"
+              alt="Lordicon"
+              width={50}
+              height={50}
+              priority
+              unoptimized
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
         </div>
-      </main>
-    </div>
+        <p>A crowdfunding Platform to earn Money</p>
+        <div className="flex gap-1">
+          <button className="bg-blue-600 text-white font-bold border rounded-full p-2 cursor-pointer hover:scale-110">
+            Start Now!
+          </button>
+          <button className="bg-blue-600 text-white font-bold border rounded-full p-2 cursor-pointer hover:scale-110">
+            Read More
+          </button>
+
+        </div>
+      </div>
+      <div className="line h-0.5 bg-black opacity-10 w-full"></div>
+      <div className="flex flex-col p-16">
+        <h1 className="text-lg font-bold text-center my-4">Your Supporters can buy you a Chai</h1>
+        <div className="flex gap-5 items-center justify-center">
+          <div className="item flex justify-around gap-5 md:w-full md:flex-row flex-col">
+            <div className="rounded-full p-4 bg-slate-700 flex flex-col items-center">
+              <div
+                className="cursor-pointer"
+                onMouseEnter={() => manRef.current?.playFromBeginning()}
+              >
+                <Player
+                  ref={manRef}
+                  icon={MAN}
+                  size={50}
+                />
+              </div>
+              <p className="text-white font-bold">Fund Yourself</p>
+            </div>
+            <div className="rounded-full p-4 bg-slate-700 flex flex-col items-center">
+              <div
+                className="cursor-pointer"
+                onMouseEnter={() => coinRef.current?.playFromBeginning()}
+              >
+                <Player
+                  ref={coinRef}
+                  icon={COIN}
+                  size={50}
+                />
+              </div>
+              <p className="text-white font-bold">Fund Yourself</p>
+            </div>
+            <div className="rounded-full p-4 bg-slate-700 flex flex-col items-center">
+              <div
+                className="cursor-pointer"
+                onMouseEnter={() => fanRef.current?.playFromBeginning()}
+              >
+                <Player
+                  ref={fanRef}
+                  icon={FANS}
+                  size={50}
+                />
+              </div>
+              <p className="text-white font-bold">Fans want to help </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="line h-0.5 bg-black opacity-10 w-full"></div>
+
+      <div className="flex flex-col p-16">
+        <h1 className="text-lg font-bold text-center my-4">Learn More About Us</h1>
+        <div className="flex gap-5 items-center justify-center">
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/GCm2Akdz3Qg?si=MOCzmJzvcyoYQOEU" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+        </div>
+      </div>
+
+    </>
   );
 }
