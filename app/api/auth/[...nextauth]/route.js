@@ -11,7 +11,7 @@ import connectDB from "../../../db/connectDb";
 
 
 export const handler = NextAuth({
-    
+
   providers: [
     // Google({
     //   clientId: process.env.AUTH_GOOGLE_ID,
@@ -34,38 +34,47 @@ export const handler = NextAuth({
     // }),
   ],
   callbacks: {
-  async signIn({ user, account, profile, email, credentials }) {
-    const isAllowedToSignIn = true
-    if(account.provider === "github"){
+    async signIn({ user, account, profile, email, credentials }) {
+      const isAllowedToSignIn = true
+      if (account.provider === "github") {
+
+        await connectDB();
+        //Connect to database
+        // const client = await mongoose.connect("mongodb://localhost:27017/PayPort");
+        //Check if user is in database
+        const currentUser = await User.findOne({ email: user.email })
+        if (!currentUser) {
+          const newUser = new User({
+            email: user.email,
+            username: user.email.split("@")[0]
+          })
+          await newUser.save();
+          user.name = newUser.username;
+
+        }
+
+        //We have to return true otherwise it will not allow to sign i(Permission denied)
+      }
+      // else{
+      //   user.name = currentUser.username;
+      // }
+      return true
+    },
+    async session({ session, user, token }) {
 
       await connectDB();
-      //Connect to database
-      // const client = await mongoose.connect("mongodb://localhost:27017/PayPort");
-      //Check if user is in database
-      const currentUser = await User.findOne({email:email})
-      if(!currentUser){
-        const newUser = await new User({
-          email: email,
-          username: email.split("@")[0]
-        })
-        await newUser.save();
-        
-      }
+      const dbUser = await User.findOne({ email: session.user.email })
 
-      //We have to return true otherwise it will not allow to sign i(Permission denied)
-      return true
+      if (dbUser) {
+        session.user.name = dbUser.username;
+      }
+      return session
     }
-  },
-  async session({session , user , token}){
-    const dbUser = await User.find({email:session.user.email})
-    session.user.name = dbUser.username
-    return session
   }
-}
 });
 // export async function GET(request) {}
- 
+
 // export async function HEAD(request) {}
- 
+
 // export async function POST(request) {}
 export { handler as GET, handler as POST };
