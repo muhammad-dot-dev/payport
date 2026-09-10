@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-import Script from 'next/script'
-import { useSession } from 'next-auth/react'
+// import Script from 'next/script'
+// import { useSession } from 'next-auth/react'
 import { fetchuser, fetchpayments, initiate } from '../../actions/useractions'
 import { useSearchParams } from 'next/navigation'
 import { ToastContainer, toast } from 'react-toastify';
@@ -17,6 +17,7 @@ const PaymentPage = ({ username }) => {
     const [paymentform, setPaymentform] = useState({ name: "", message: "", amount: "" })
     const [currentUser, setcurrentUser] = useState({})
     const [payments, setPayments] = useState([])
+    const [loading, setLoading] = useState(false)
     const searchParams = useSearchParams()
     const router = useRouter()
 
@@ -45,36 +46,62 @@ const PaymentPage = ({ username }) => {
     }
 
 
-    const pay = async (amount) => {
-        // Get the order Id 
-        let a = await initiate(amount, username, paymentform)
-        let orderId = a.id
-        var options = {
-            "key": currentUser.razorpayid, // Enter the Key ID generated from the Dashboard
-            "amount": amount, // Amount is in currency subunits. Default currency is PKR. Hence, 50000 refers to 50000 paise
-            "currency": "INR",
-            "name": "Get Me A Chai", //your business name
-            "description": "Test Transaction",
-            "image": "https://example.com/your_logo",
-            "order_id": orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-            "callback_url": `${process.env.NEXT_PUBLIC_URL}/api/razorpay`,
-            "prefill": { //We recommend using the prefill parameter to auto-fill customer's contact information especially their phone number
-                "name": "Gaurav Kumar", //your customer's name
-                "email": "gaurav.kumar@example.com",
-                "contact": "9000090000" //Provide the customer's phone number for better conversion rates 
-            },
-            "notes": {
-                "address": "Razorpay Corporate Office"
-            },
-            "theme": {
-                "color": "#3399cc"
+    // const pay = async (amount) => {
+    //     if (!amount || amount <= 0) {
+    //         toast.error("Enter a valid amount")
+    //         return
+    //     }
+    //     setLoading(true)
+    //     try {
+    //         // `initiate` now creates the Payment doc + Safepay session server-side
+    //         // and returns { trackerToken, orderId }
+    //         // const { trackerToken, orderId } = await initiate(amount, username, paymentform)
+
+    //         // if (result.checkoutURL) {
+    //         //     window.location.href = result.checkoutURL;
+    //         // }
+    //         const result = await initiate(
+    //             amount,
+    //             username,
+    //             paymentform
+    //         );
+
+    //         if (result.checkoutURL) {
+    //             window.location.href = result.checkoutURL;
+    //         }
+
+    //         const redirectUrl = `${window.location.origin}/${username}/payment?paymentdone=true&orderId=${orderId}`
+    //         window.location.href = `https://sandbox.getsafepay.com/embedded/${trackerToken}?redirect_url=${encodeURIComponent(redirectUrl)}`
+    //     } catch (err) {
+    //         console.error(err)
+    //         toast.error("Something went wrong, please try again")
+    //         setLoading(false)
+    //     }
+    // }
+    const pay = async () => {
+        try {
+            if (!paymentform.amount || paymentform.amount <= 0) {
+                toast.error("Please enter a valid amount");
+                return;
             }
+            setLoading(true);
+
+            const result = await initiate(
+                Number(paymentform.amount),
+                username,
+                paymentform
+            );
+
+            console.log("Payment result:", result);
+
+            window.location.href = result.checkoutUrl;
+
+        } catch (error) {
+            console.error("Payment error:", error);
+            toast.error("Something went wrong");
+            setLoading(false);
         }
-
-        // var rzp1 = new Razorpay(options);
-        // rzp1.open();
-    }
-
+    };
 
     return (
         <>
@@ -118,21 +145,55 @@ const PaymentPage = ({ username }) => {
                     <div className="makepayment w-1/2 bg-blue-950 rounded-lg p-3">
                         <h2 className='text-2xl font-bold my-5'>Make a Payment</h2>
                         <div className='flex flex-col gap-2'>
-                            <input type="text" className='w-full p-3 rounded-lg bg-blue-800' placeholder='Enter Name' />
+                            {/* <input type="text" className='w-full p-3 rounded-lg bg-blue-800' placeholder='Enter Name' />
                             <input type="text" className='w-full p-3 rounded-lg bg-blue-800' placeholder='Enter Message' />
                             <input type="text" className='w-full p-3 rounded-lg bg-blue-800' placeholder='Enter Amount' />
-                            <button className='bg-blue-800 p-3 rounded-lg hover:bg-blue-500 cursor-pointer w-1/5'>Pay</button>
+                            <button className='bg-blue-800 p-3 rounded-lg hover:bg-blue-500 cursor-pointer w-1/5'>Pay</button> */}
                             {/* Or choose from amount */}
+
+                            <input
+                                type="text"
+                                name="name"
+                                required
+                                value={paymentform.name}
+                                onChange={handleChange}
+                                className='w-full p-3 rounded-lg bg-blue-800'
+                                placeholder='Enter Name'
+                            />
+                            <input
+                                required
+                                type="text"
+                                name="message"
+                                value={paymentform.message}
+                                onChange={handleChange}
+                                className='w-full p-3 rounded-lg bg-blue-800'
+                                placeholder='Enter Message'
+                            />
+                            <input
+                                type="number"
+                                name="amount"
+                                value={paymentform.amount}
+                                onChange={handleChange}
+                                className='w-full p-3 rounded-lg bg-blue-800'
+                                placeholder='Enter Amount'
+                            />
+                            <button
+                                className='bg-blue-800 p-3 rounded-lg hover:bg-blue-500 cursor-pointer w-1/5 disabled:opacity-50'
+                                onClick={() => pay(Number(paymentform.amount))}
+                                disabled={!paymentform.amount || loading}
+                            >
+                                {loading ? "Redirecting..." : "Pay"}
+                            </button>
                         </div>
                         <div className="flex gap-5">
-                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={()=>{pay(10)}}>Pay Rs. 10</button>
-                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={()=>{pay(10)}}>Pay Rs. 2 0</button>
-                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={()=>{pay(10)}}>Pay Rs. 30</button>
+                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={() => { pay(10) }}>Pay Rs. 10</button>
+                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={() => { pay(20) }}>Pay Rs. 20</button>
+                            <button className='bg-blue-800 p-2 rounded-lg my-3 hover:bg-blue-500 cursor-pointer' onClick={() => { pay(30) }}>Pay Rs. 30</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <ToastProvider/>
+            <ToastProvider />
         </>
     )
 }

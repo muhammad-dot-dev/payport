@@ -50,12 +50,12 @@ const Navbar = () => {
         </>
         }
         {session &&
-          <button onClick={() => { signOut() }} className="bg-blue-600 text-white font-bold border rounded-2xl p-2 cursor-pointer hover:scale-110">
+          <button onClick={() => { signOut() }} className="bg-gradient-to-b from-blue-950 to-blue-900 text-white font-bold border rounded-2xl p-2 cursor-pointer hover:scale-110">
             Logout
           </button>
         }
         {!session && <Link href={"/login"}>
-          <button className="bg-blue-600 text-white font-bold border rounded-2xl p-2 cursor-pointer hover:scale-110">
+          <button className="bg-gradient-to-b from-blue-950 to-blue-900 text-white font-bold border rounded-2xl p-2 cursor-pointer hover:scale-110">
             Login
           </button>
         </Link>}

@@ -1,72 +1,92 @@
 "use server"
+import connectDB from "../app/db/connectDb";
+import Payment from "../app/models/Payment";
+import safepay from "../app/lib/safepay";
+import User from "../app/models/User";
+import { nanoid } from "nanoid";
 
+export async function initiate(amount, to_user, paymentform) {
+    await connectDB();
 
-//We will use RAAST ID INTEGRATION AT THE END 
-// import Razorpay from "razorpay"
-import Payment from "../app/models/Payment"
-import connectDb from "../app/db/connectDb"
-import User from "../app/models/User"
+    const orderId = `ORD-${nanoid(10)}`;
 
+    const payment = await Payment.create({
+        name: paymentform.name || "Anonymous",
+        to_user,
+        orderId,
+        message: paymentform.message,
+        amount,
+    });
 
-export const initiate = async (amount, to_username, paymentform) => {
-    await connectDb()
-    // fetch the secret of the user who is getting the payment 
-    let user = await User.findOne({username: to_username})
-    const secret = user.razorpaysecret
-
-    var instance = new Razorpay({ key_id: user.razorpayid, key_secret: secret })
-
-
-
-    let options = {
-        amount: Number.parseInt(amount),
+    const session = await safepay.payments.session.setup({
+        merchant_api_key: process.env.SAFEPAY_PUBLIC_KEY,
+        intent: "RAAST",
+        mode: "payment",
         currency: "PKR",
+        amount: amount * 100,
+    });
+
+    // return {
+    //     session,
+    //     orderId
+    // };
+
+    const trackerToken = session.data.tracker.token;
+    console.log("SAFEPAy SESSION:", session);
+
+    payment.safepayTrackerToken = trackerToken;
+    await payment.save();
+
+    const checkoutUrl = await safepay.checkout.createCheckoutUrl({
+        token: trackerToken,
+    });
+
+    // const authResponse = await safepay.auth.passport.create();
+
+    // const authToken = authResponse.data;
+
+
+    // const checkoutURL = safepay.checkouts.payment.create({
+    //     tracker: session.data.tracker.token,
+    //     tbt: authToken,
+    //     environment: "sandbox",
+    //     source: "hosted",
+    //     redirect_url: "http://localhost:3000/payment/success",
+    //     cancel_url: "http://localhost:3000/payment/cancel",
+    // });
+    console.log("CHECKOUT URL:", checkoutUrl);
+
+
+    return {
+        trackerToken,
+        orderId,
+        checkoutUrl,
+    };
+}
+
+export async function fetchuser(username) {
+    await connectDB();
+
+    const user = await User.findOne({
+        username: username
+    }).lean();
+
+    if (!user) {
+        return null;
     }
 
-    let x = await instance.orders.create(options)
-
-    // create a payment object which shows a pending payment in the database
-    await Payment.create({ oid: x.id, amount: amount/100, to_user: to_username, name: paymentform.name, message: paymentform.message })
-
-    return x
-
+    return JSON.parse(JSON.stringify(user));
 }
 
 
-export const fetchuser = async (username) => {
-    await connectDb()
-    let u = await User.findOne({ username: username })
-    let user = u.toObject({ flattenObjectIds: true })
-    return user
-}
+export async function fetchpayments(username) {
+    await connectDB();
 
-export const fetchpayments = async (username) => {
-    await connectDb()
-    // find all payments sorted by decreasing order of amount and flatten object ids
-    let p = await Payment.find({ to_user: username, done:true }).sort({ amount: -1 }).limit(10).lean()
-    return p
-}
+    const payments = await Payment.find({
+        to_user: username
+    })
+        .sort({ createdAt: -1 })
+        .lean();
 
-export const updateProfile = async (data, oldusername) => {
-    await connectDb()
-    let ndata = Object.fromEntries(data)
-
-    // If the username is being updated, check if username is available
-    if (oldusername !== ndata.username) {
-        let u = await User.findOne({ username: ndata.username })
-        if (u) {
-            return { error: "Username already exists" }
-        }   
-        await User.updateOne({email: ndata.email}, ndata)
-        // Now update all the usernames in the Payments table 
-        await Payment.updateMany({to_user: oldusername}, {to_user: ndata.username})
-        
-    }
-    else{
-
-        
-        await User.updateOne({email: ndata.email}, ndata)
-    }
-
-
+    return JSON.parse(JSON.stringify(payments));
 }
