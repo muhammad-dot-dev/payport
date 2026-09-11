@@ -1,8 +1,12 @@
 "use client";
 import React from 'react'
-import { useRef, useState ,useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useRouter } from 'next/navigation';
+import { updateProfile, fetchuser } from '../../actions/useractions';
+import { toast } from 'react-toastify';
+import ToastProvider from '../Toastprovider';
+import { ToastContainer } from 'react-toastify';
 
 /**
  * Dashboard / Profile Settings page
@@ -32,10 +36,15 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated" && !session) {
-      router.push("/login")
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
     }
-  }, [status, router])
+
+    if (status === "authenticated" && session?.user?.name) {
+      getdata();
+    }
+  }, [status, session, router]);
 
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -83,8 +92,27 @@ export default function DashboardPage() {
     return Object.keys(next).length === 0;
   }
 
+const getdata = async () => {
+  if (!session?.user?.name) return;
+
+  try {
+    const u = await fetchuser(session.user.name);
+
+    setForm({
+      name: u?.name ?? "",
+      email: u?.email ?? "",
+      username: u?.username ?? "",
+      razorpayKeyId: u?.razorpayKeyId ?? "",
+      razorpayKeySecret: u?.razorpayKeySecret ?? "",
+    });
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+  }
+};
+
   async function handleSubmit(e) {
-    e.preventDefault();
+
+
     if (!validate()) return;
 
     setSaving(true);
@@ -105,7 +133,9 @@ export default function DashboardPage() {
       // const res = await fetch("/api/profile", { method: "POST", body: payload });
       // if (!res.ok) throw new Error("Save failed");
 
-      await new Promise((resolve) => setTimeout(resolve, 900)); // placeholder delay
+      // await new Promise((resolve) => setTimeout(resolve, 900)); // placeholder delay
+      let a = await updateProfile(payload, session.user.name)
+      toast.success("Profile updated")
 
       setSaved(true);
     } catch (err) {
@@ -127,7 +157,7 @@ export default function DashboardPage() {
           </p>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form action={handleSubmit} className="space-y-8">
           {/* ---------- Cover + Avatar ---------- */}
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-blue-950 to-blue-900">
             <div className="relative h-40 w-full bg-gradient-to-b from-blue-950 to-blue-900 sm:h-52">
@@ -205,7 +235,7 @@ export default function DashboardPage() {
               <Field label="Name" error={errors.name}>
                 <input
                   type="text"
-                  value={form.name}
+                  value={form.name ?? ""}
                   onChange={(e) => updateField("name", e.target.value)}
                   placeholder="Jordan Lee"
                   className={inputClass(!!errors.name)}
@@ -289,7 +319,7 @@ export default function DashboardPage() {
           {/* ---------- Actions ---------- */}
           <div className="flex items-center justify-end gap-3">
             {saved && (
-              <span className="text-sm text-blue-200">Changes saved.</span>
+              <span className="text-sm text-black">Changes saved.</span>
             )}
             <button
               type="submit"
@@ -301,6 +331,7 @@ export default function DashboardPage() {
           </div>
         </form>
       </div>
+      <ToastProvider/>
     </main>
   );
 }

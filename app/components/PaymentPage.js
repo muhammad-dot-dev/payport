@@ -13,6 +13,7 @@ import { notFound } from "next/navigation"
 
 const PaymentPage = ({ username }) => {
     // const { data: session } = useSession()
+    console.log("USERNAME:", username)
 
     const [paymentform, setPaymentform] = useState({ name: "", message: "", amount: "" })
     const [currentUser, setcurrentUser] = useState({})
@@ -26,12 +27,10 @@ const PaymentPage = ({ username }) => {
     }, [])
 
     useEffect(() => {
-        if (searchParams.get("paymentdone") == "true") {
-            toast.success("Thanks for your donation!")
+        if (searchParams.get("paymentdone") === "true") {
+            toast.success("Thanks for your donation!");
         }
-        router.push(`/${username}`)
-
-    }, [])
+    }, [searchParams]);
 
 
     const handleChange = (e) => {
@@ -78,18 +77,30 @@ const PaymentPage = ({ username }) => {
     //         setLoading(false)
     //     }
     // }
-    const pay = async () => {
+    const pay = async (selectedAmount = null) => {
         try {
-            if (!paymentform.amount || paymentform.amount <= 0) {
+
+            const amount = selectedAmount ?? Number(paymentform.amount);
+
+            if (!amount || amount <= 0) {
                 toast.error("Please enter a valid amount");
                 return;
             }
+
+            if (!paymentform.name.trim() || !paymentform.message.trim()) {
+                toast.error("Please fill in your name and message");
+                return;
+            }
+
             setLoading(true);
 
             const result = await initiate(
-                Number(paymentform.amount),
+                amount,
                 username,
-                paymentform
+                {
+                    ...paymentform,
+                    amount: String(amount)
+                }
             );
 
             console.log("Payment result:", result);
@@ -127,18 +138,15 @@ const PaymentPage = ({ username }) => {
                         {/* Show list of all supporters as Leadderboard */}
                         <h2 className='text-lg font-bold  '>Supporters</h2>
                         <ul className='overflow-auto mx-6 text-lg'>
-                            <li className='my-2 flex items-center gap-3'>
-                                <img className='rounded-full' width={40} src="/profilealt.png" alt="" />
-                                <span>Shubham donated <b>30$</b> with a message ""</span>
-                            </li>
-                            <li className='my-2 flex items-center gap-3'>
-                                <img className='rounded-full' width={40} src="/profilealt.png" alt="" />
-                                <span>Shubham donated <b>30$</b> with a message ""</span>
-                            </li>
-                            <li className='my-2 flex items-center gap-3'>
-                                <img className='rounded-full' width={40} src="/profilealt.png" alt="" />
-                                <span>Shubham donated <b>30$</b> with a message ""</span>
-                            </li>
+                            {payments.length === 0 && <li>No Payments yet</li>}
+                            {payments.map((p, i) => {
+                                return <li key={i} className='my-2 flex items-center gap-3'>
+                                    <img className='rounded-full' width={40} src="/profilealt.png" alt="" />
+                                    <span>{p.name} donated <b>Rs . {p.amount} </b> with a message "{p.message}"</span>
+                                </li>
+                            })}
+
+
 
                         </ul>
                     </div>
